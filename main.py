@@ -176,7 +176,7 @@ class Main(QMainWindow):
             "All Files (*);; Text Files (*.txt)",
         )
         cls.ddl_addr = fname[0]
-        print(fname)
+        # print(fname)
 
     @classmethod
     def open_mapping_dialog(cls):
@@ -192,7 +192,7 @@ class Main(QMainWindow):
     @classmethod
     def save_file_dialog(cls):
         cls.folder_addr, _ = QFileDialog.getSaveFileName(QWidget(), "QFileDialog.getSaveFileName()", "",
-                                                         "All Files (*);;Text Files (*.txt)")
+                                                         "Excel Files (*.xlsx)")
         # if cls.folder_addr:
         #     print(cls.folder_addr)
 
@@ -202,12 +202,12 @@ class Main(QMainWindow):
 
     @classmethod
     def main_function(cls):
-        print(cls.column_names)
+        # print(cls.column_names)
         mappings_dict = {}
         for i in range(len(cls.mapping_addresses)):
             mappings_dict[f'df_{i + 1}'] = mapping_df(cls.mapping_addresses[i], cls.column_names)
 
-        print(mappings_dict)
+        # print(mappings_dict)
 
         if len(cls.mapping_addresses) > 1:
             df_mappings = pd.concat(mappings_dict.values(), ignore_index=True)
