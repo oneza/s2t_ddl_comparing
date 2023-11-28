@@ -43,15 +43,23 @@ def get_table_name(table_ddl):
 
 
 def get_column_info(table_ddl):
-    column_data = table_ddl\
-        .split('(')[1]\
-        .replace(' ', '')\
-        .replace('`', ' ')\
-        .replace(')', ',')\
-        .split(',')
-    column_data = [_.lstrip().lower() for _ in column_data if _ != '']
+    column_data = table_ddl \
+        .split('(')
+    if len(column_data) > 2:
+        column_data_new = ''
+        for substr in column_data[1:]:
+            column_data_new += substr
+    else:
+        column_data_new = column_data[1]
 
-    return column_data
+    column_data_new = column_data_new \
+        .replace(' ', '') \
+        .replace('`', ' ') \
+        .replace(')', ',') \
+        .split(',')
+    column_data_new = [_.lstrip() for _ in column_data_new if _ != '']
+
+    return column_data_new
 
 
 def set_ddl_df(ddl):
@@ -59,7 +67,15 @@ def set_ddl_df(ddl):
     for table in ddl:
         table_name = get_table_name(table)
         columns = get_column_info(table)
-        rows = [(table_name, _.split(' ')[0], _.split(' ')[1]) for _ in columns]
+        columns_res = []
+        k = 1
+        for i in range(len(columns)):
+            if len(columns[i]) == 1:
+                columns_res[i-k] = columns_res[i-k].replace('decimal', 'decimal(') + ',' + columns[i] + ')'
+                k += 1
+            else:
+                columns_res.append(columns[i])
+        rows = [(table_name, _.split(' ')[0], _.split(' ')[1]) for _ in columns_res]
 
         tables_data += rows
 
