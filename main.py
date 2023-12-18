@@ -94,6 +94,9 @@ class Main(QMainWindow):
     ddl_addr = ''
     folder_addr = ''
     column_names = ''
+    names_column_name = ''
+    type_column_name = ''
+    table_column_name = ''
 
     def __init__(self):
         super().__init__()
@@ -125,11 +128,29 @@ class Main(QMainWindow):
         folder_selection.clicked.connect(lambda: self.save_file_dialog())
         folder_selection.clicked.connect(lambda: self.update_text(folder_selection_value_text, f'{self.folder_addr}'))
 
-        tbl_name_text = QLabel(self)
-        tbl_name_text.setText("Fill in letters of columns: ")
-        tbl_name_value_text = QLineEdit(self)
-        tbl_name_value_text.setText('')
-        tbl_name_value_text.textChanged.connect(self.change_text)
+        # tbl_name_text = QLabel(self)
+        # tbl_name_text.setText("Fill in letters of columns: ")
+        # tbl_name_value_text = QLineEdit(self)
+        # tbl_name_value_text.setText('')
+        # tbl_name_value_text.textChanged.connect(self.change_text)
+
+        table_name_text = QLabel(self)
+        table_name_text.setText("Fill in letters of table name column: ")
+        table_name_value_text = QLineEdit(self)
+        table_name_value_text.setText('')
+        table_name_value_text.textChanged.connect(self.change_table_text)
+
+        column_name_text = QLabel(self)
+        column_name_text.setText("Fill in letters of column name column: ")
+        column_name_value_text = QLineEdit(self)
+        column_name_value_text.setText('')
+        column_name_value_text.textChanged.connect(self.change_name_text)
+
+        dtype_name_text = QLabel(self)
+        dtype_name_text.setText("Fill in letters of data type name column: ")
+        dtype_name_value_text = QLineEdit(self)
+        dtype_name_value_text.setText('')
+        dtype_name_value_text.textChanged.connect(self.change_dtype_text)
 
         run_button = QPushButton(self)
         run_button.setText("Run")
@@ -146,9 +167,15 @@ class Main(QMainWindow):
         layout.addWidget(folder_selection_text, 2, 0)
         layout.addWidget(folder_selection_value_text, 2, 1)
         layout.addWidget(folder_selection, 2, 2)
-        layout.addWidget(run_button, 4, 0)
-        layout.addWidget(tbl_name_text, 3, 0)
-        layout.addWidget(tbl_name_value_text, 3, 1)
+        layout.addWidget(run_button, 7, 0)
+        # layout.addWidget(tbl_name_text, 3, 0)
+        # layout.addWidget(tbl_name_value_text, 3, 1)
+        layout.addWidget(table_name_text, 4, 0)
+        layout.addWidget(table_name_value_text, 4, 1)
+        layout.addWidget(column_name_text, 5, 0)
+        layout.addWidget(column_name_value_text, 5, 1)
+        layout.addWidget(dtype_name_text, 6, 0)
+        layout.addWidget(dtype_name_value_text, 6, 1)
 
         widget = QWidget()
         widget.setLayout(layout)
@@ -196,16 +223,28 @@ class Main(QMainWindow):
         # if cls.folder_addr:
         #     print(cls.folder_addr)
 
+#   IDK how to make this function work with params so I had to write three exact copies of it
     @classmethod
-    def change_text(cls, text):
-        cls.column_names = text
+    def change_table_text(cls, text):
+        cls.table_column_name = text
+
+    @classmethod
+    def change_name_text(cls, text):
+        cls.names_column_name = text
+
+    @classmethod
+    def change_dtype_text(cls, text):
+        cls.type_column_name = text
+
 
     @classmethod
     def main_function(cls):
-        # print(cls.column_names)
+
+        columns_string = cls.table_column_name.upper() + ',' + cls.names_column_name.upper() + ',' \
+                         + cls.type_column_name.upper()
         mappings_dict = {}
         for i in range(len(cls.mapping_addresses)):
-            mappings_dict[f'df_{i + 1}'] = mapping_df(cls.mapping_addresses[i], cls.column_names)
+            mappings_dict[f'df_{i + 1}'] = mapping_df(cls.mapping_addresses[i], columns_string)
 
         # print(mappings_dict)
 
