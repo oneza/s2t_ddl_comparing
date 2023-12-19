@@ -138,7 +138,7 @@ class Main(QMainWindow):
         table_name_text.setText("Fill in letters of table name column: ")
         table_name_value_text = QLineEdit(self)
         table_name_value_text.setText('')
-        table_name_value_text.textChanged.connect(self.change_table_text)
+        table_name_value_text.textChanged.connect(lambda: self.change_table_text(folder_selection_value_text, 'table'))
 
         column_name_text = QLabel(self)
         column_name_text.setText("Fill in letters of column name column: ")
@@ -225,8 +225,9 @@ class Main(QMainWindow):
 
 #   IDK how to make this function work with params so I had to write three exact copies of it
     @classmethod
-    def change_table_text(cls, text):
-        cls.table_column_name = text
+    def change_table_text(cls, text, param):
+        if param == 'table':
+            cls.table_column_name = text
 
     @classmethod
     def change_name_text(cls, text):
