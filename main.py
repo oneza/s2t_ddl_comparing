@@ -12,12 +12,30 @@ def beautify_string(text):
         .replace('е', 'e')
 
 
+def beautify_decimals(text):
+    if text and '(' not in text:
+        text = '(' + text + ')'
+    return text.replace('.', ',')
+
+
 def mapping_df(mapping_file, columns_string):
-    df_mapping = pd.read_excel(mapping_file,
-                               sheet_name=4,
-                               header=1,
-                               usecols=columns_string,
-                               names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])
+    if len(columns_string.split(',')) == 4:
+        df_mapping = pd.read_excel(mapping_file,
+                                   sheet_name=4,
+                                   header=1,
+                                   usecols=columns_string,
+                                   names=['mapping_tbl_name',
+                                          'mapping_column_name',
+                                          'mapping_column_type',
+                                          'mapping_column_length'],
+                                   converters={'mapping_column_length': str})\
+            .fillna('')
+    else:
+        df_mapping = pd.read_excel(mapping_file,
+                                   sheet_name=4,
+                                   header=1,
+                                   usecols=columns_string,
+                                   names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])
     return df_mapping
 
 
@@ -97,6 +115,7 @@ class Main(QMainWindow):
     names_column_name = ''
     type_column_name = ''
     table_column_name = ''
+    decimal_column_name = ''
 
     def __init__(self):
         super().__init__()
@@ -138,19 +157,31 @@ class Main(QMainWindow):
         table_name_text.setText("Fill in letters of table name column: ")
         table_name_value_text = QLineEdit(self)
         table_name_value_text.setText('')
-        table_name_value_text.textChanged.connect(lambda: self.change_table_text(folder_selection_value_text, 'table'))
+        table_name_value_text.textChanged.connect(lambda: self.change_text(table_name_value_text.text(), 'table'))
 
         column_name_text = QLabel(self)
         column_name_text.setText("Fill in letters of column name column: ")
         column_name_value_text = QLineEdit(self)
         column_name_value_text.setText('')
-        column_name_value_text.textChanged.connect(self.change_name_text)
+        column_name_value_text.textChanged.connect(lambda: self.change_text(column_name_value_text.text(), 'name'))
 
         dtype_name_text = QLabel(self)
         dtype_name_text.setText("Fill in letters of data type name column: ")
         dtype_name_value_text = QLineEdit(self)
         dtype_name_value_text.setText('')
-        dtype_name_value_text.textChanged.connect(self.change_dtype_text)
+        dtype_name_value_text.textChanged.connect(lambda: self.change_text(dtype_name_value_text.text(), 'dtype'))
+
+        decimals_text = QLabel(self)
+        decimals_text.setText("Are there decimals?")
+        decimal_checkbox = QCheckBox()
+        decimal_checkbox.stateChanged.connect(lambda: self.set_visible(decimal_checkbox, decimals_additional_text, decimals_additional_text_value))
+        decimals_additional_text = QLabel(self)
+        decimals_additional_text.setText("Fill in letters of length column:")
+        decimals_additional_text.setVisible(False)
+        decimals_additional_text_value = QLineEdit(self)
+        decimals_additional_text_value.setText('')
+        decimals_additional_text_value.textChanged.connect(lambda: self.change_text(decimals_additional_text_value.text(), 'decimal'))
+        decimals_additional_text_value.setVisible(False)
 
         run_button = QPushButton(self)
         run_button.setText("Run")
@@ -167,15 +198,18 @@ class Main(QMainWindow):
         layout.addWidget(folder_selection_text, 2, 0)
         layout.addWidget(folder_selection_value_text, 2, 1)
         layout.addWidget(folder_selection, 2, 2)
-        layout.addWidget(run_button, 7, 0)
-        # layout.addWidget(tbl_name_text, 3, 0)
-        # layout.addWidget(tbl_name_value_text, 3, 1)
         layout.addWidget(table_name_text, 4, 0)
         layout.addWidget(table_name_value_text, 4, 1)
         layout.addWidget(column_name_text, 5, 0)
         layout.addWidget(column_name_value_text, 5, 1)
         layout.addWidget(dtype_name_text, 6, 0)
         layout.addWidget(dtype_name_value_text, 6, 1)
+        layout.addWidget(decimals_text, 7, 0)
+        layout.addWidget(decimal_checkbox, 7, 1)
+        layout.addWidget(decimals_additional_text, 7, 2)
+        layout.addWidget(decimals_additional_text_value, 7, 3)
+
+        layout.addWidget(run_button, 8, 0)
 
         widget = QWidget()
         widget.setLayout(layout)
@@ -200,7 +234,7 @@ class Main(QMainWindow):
             QWidget(),
             "Open File",
             "${HOME}",
-            "All Files (*);; Text Files (*.txt)",
+            "Text Files (*.txt)",
         )
         cls.ddl_addr = fname[0]
         # print(fname)
@@ -211,7 +245,7 @@ class Main(QMainWindow):
             QWidget(),
             "Open File",
             "${HOME}",
-            "All Files (*);; Excel Files (*.xlsx)",
+            "Excel Files (*.xlsx)",
         )
         cls.mapping_addresses = fname[0]
         # print(fname)
@@ -223,26 +257,36 @@ class Main(QMainWindow):
         # if cls.folder_addr:
         #     print(cls.folder_addr)
 
-#   IDK how to make this function work with params so I had to write three exact copies of it
+#   OK actually I found a way for it to work
     @classmethod
-    def change_table_text(cls, text, param):
-        if param == 'table':
+    def change_text(cls, text, column_name):
+        if column_name == 'table':
             cls.table_column_name = text
+        elif column_name == 'name':
+            cls.names_column_name = text
+        elif column_name == 'dtype':
+            cls.type_column_name = text
+        elif column_name == 'decimal':
+            cls.decimal_column_name = text
+        else:
+            pass
 
-    @classmethod
-    def change_name_text(cls, text):
-        cls.names_column_name = text
-
-    @classmethod
-    def change_dtype_text(cls, text):
-        cls.type_column_name = text
-
+    def set_visible(self, checkbox, *args):
+        if checkbox.isChecked():
+            for arg in args:
+                arg.setVisible(True)
+        else:
+            for arg in args:
+                arg.setVisible(False)
 
     @classmethod
     def main_function(cls):
 
         columns_string = cls.table_column_name.upper() + ',' + cls.names_column_name.upper() + ',' \
                          + cls.type_column_name.upper()
+        if cls.decimal_column_name:
+            columns_string = columns_string + ',' + cls.decimal_column_name.upper()
+        print(columns_string)
         mappings_dict = {}
         for i in range(len(cls.mapping_addresses)):
             mappings_dict[f'df_{i + 1}'] = mapping_df(cls.mapping_addresses[i], columns_string)
@@ -256,9 +300,17 @@ class Main(QMainWindow):
 
         df_mappings['mapping_tbl_name'] = [beautify_string(_) for _ in df_mappings['mapping_tbl_name'].values]
         df_mappings['mapping_column_name'] = [beautify_string(_) for _ in df_mappings['mapping_column_name'].values]
-        df_mappings['mapping_column_type'] = [beautify_string(_) for _ in df_mappings['mapping_column_type'].values]
+        if len(columns_string.split(',')) == 4:
+            df_mappings['mapping_column_type'] = [beautify_string(_[0])+beautify_decimals(_[1]) for _ in
+                                                  zip(df_mappings['mapping_column_type'].values,
+                                                      df_mappings['mapping_column_length'].values)]
+            df_mappings = df_mappings.drop(['mapping_column_length'], axis=1)
+        else:
+            df_mappings['mapping_column_type'] = [beautify_string(_) for _ in df_mappings['mapping_column_type'].values]
 
-        df_ddls = pd.DataFrame(set_ddl_df(get_ddl_data(cls.ddl_addr)), columns=['ddl_tbl_name', 'ddl_column_name', 'ddl_column_type'])
+        df_ddls = pd.DataFrame(set_ddl_df(get_ddl_data(cls.ddl_addr)), columns=['ddl_tbl_name',
+                                                                                'ddl_column_name',
+                                                                                'ddl_column_type'])
 
         merge_result = pd.merge(df_mappings, df_ddls,
                                 how='outer',
