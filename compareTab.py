@@ -1,11 +1,10 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QCheckBox, QTabWidget, QGridLayout
 
 
-class Tabs(QWidget):
+class Comparator(QWidget):
 
-    def __init__(self, parent):
-        super(QWidget, self).__init__(parent)
-        layout = QVBoxLayout(self)
+    def __init__(self):
+        super().__init__()
 
         mapping_selection_text = QLabel(self)
         mapping_selection_text.setText("Select mapping files: ")
@@ -72,9 +71,6 @@ class Tabs(QWidget):
         run_button.clicked.connect(lambda: self.main_function())
         run_button.clicked.connect(lambda: self.run_button_dialog())
 
-        tab = QTabWidget()
-
-        check_page = QWidget(tab)
         check_page_layout = QGridLayout()
         check_page_layout.addWidget(mapping_selection_text, 0, 0)
         check_page_layout.addWidget(mapping_selection_value_text, 0, 1)
@@ -97,28 +93,7 @@ class Tabs(QWidget):
         check_page_layout.addWidget(decimals_additional_text_value, 7, 3)
 
         check_page_layout.addWidget(run_button, 8, 0)
-        check_page.setLayout(check_page_layout)
-
-        tab.addTab(check_page, 'Compare')
-
-        gen_page = QWidget(tab)
-        gen_page_layout = QGridLayout()
-
-        some_text = QLabel(self)
-        some_text.setText("SEcond tab text")
-
-        another_some_text = QLabel(self)
-        another_some_text.setText("Some additional text")
-
-        gen_page_layout.addWidget(some_text, 0, 0)
-        gen_page_layout.addWidget(another_some_text, 1, 0)
-
-        gen_page.setLayout(gen_page_layout)
-
-        tab.addTab(gen_page, 'Generate')
-
-        layout.addWidget(tab)
-        self.setLayout(layout)
+        self.setLayout(check_page_layout)
 
     def set_visible(self, checkbox, *args):
         if checkbox.isChecked():

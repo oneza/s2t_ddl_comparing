@@ -1,7 +1,6 @@
-from PyQt6.QtWidgets import *
 import sys
 import pandas as pd
-from main_UI import *
+from mainWindow import *
 
 
 def beautify_string(text):
