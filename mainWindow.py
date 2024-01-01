@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import *
 from compareTab import Comparator
 from generateTab import Generator
 
+
 class UI(QMainWindow):
 
     def __init__(self):
