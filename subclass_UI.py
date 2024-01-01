@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QCheckBox, QTabWidget, QGridLayout
 
 
-class Comparator(QWidget):
+class Tabs(QWidget):
 
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
@@ -99,12 +99,26 @@ class Comparator(QWidget):
         check_page_layout.addWidget(run_button, 8, 0)
         check_page.setLayout(check_page_layout)
 
-        tab.addTab(check_page, 'Tab title')
+        tab.addTab(check_page, 'Compare')
+
+        gen_page = QWidget(tab)
+        gen_page_layout = QGridLayout()
+
+        some_text = QLabel(self)
+        some_text.setText("SEcond tab text")
+
+        another_some_text = QLabel(self)
+        another_some_text.setText("Some additional text")
+
+        gen_page_layout.addWidget(some_text, 0, 0)
+        gen_page_layout.addWidget(another_some_text, 1, 0)
+
+        gen_page.setLayout(gen_page_layout)
+
+        tab.addTab(gen_page, 'Generate')
 
         layout.addWidget(tab)
         self.setLayout(layout)
-
-
 
     def set_visible(self, checkbox, *args):
         if checkbox.isChecked():
@@ -113,4 +127,3 @@ class Comparator(QWidget):
         else:
             for arg in args:
                 arg.setVisible(False)
-

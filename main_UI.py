@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import *
-from comparator_UI import Comparator
+from subclass_UI import Tabs
 
 
 class UI(QMainWindow):
@@ -7,9 +7,7 @@ class UI(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        layout = QVBoxLayout(self)
-
-        table_widget = Comparator(self)
+        table_widget = Tabs(self)
 
         layout = QGridLayout()
         layout.addWidget(table_widget)
