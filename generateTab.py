@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QCheckBox, QTabWidget, QGridLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QStackedWidget, QPushButton
 
 
 class Generator(QWidget):
@@ -6,14 +6,30 @@ class Generator(QWidget):
     def __init__(self):
         super().__init__()
 
-        some_text = QLabel(self)
-        some_text.setText("KAVO????")
+        layout = QVBoxLayout()
+        self.setLayout(layout)
 
-        another_some_text = QLabel(self)
-        another_some_text.setText("DAB DAB DAB")
+        self.stacked_widget = QStackedWidget()
+        layout.addWidget(self.stacked_widget)
 
-        gen_page_layout = QGridLayout()
-        gen_page_layout.addWidget(some_text, 0, 0)
-        gen_page_layout.addWidget(another_some_text, 1, 0)
+        self.switch_screen_btn = QPushButton("Switch Screen")
+        layout.addWidget(self.switch_screen_btn)
+        self.switch_screen_btn.clicked.connect(self.switch_screen)
 
-        self.setLayout(gen_page_layout)
+    def switch_screen(self):
+        num_screens = 3  # Replace with actual user input
+
+        current_screen_count = self.stacked_widget.count()
+
+        if num_screens > current_screen_count:
+            for i in range(num_screens - current_screen_count):
+                self.stacked_widget.addWidget(ScreenWidget())
+        elif num_screens < current_screen_count:
+            for i in range(current_screen_count - num_screens):
+                self.stacked_widget.removeWidget(self.stacked_widget.widget(0))
+        # Change the current screen as needed, for example: self.stacked_widget.setCurrentIndex(0)
+
+
+class ScreenWidget(QWidget):
+# Define the content of each screen here
+    pass
