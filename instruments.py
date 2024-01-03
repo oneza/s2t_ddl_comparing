@@ -17,6 +17,10 @@ def beautify_decimals(text):
     return text.replace('.', ',')
 
 
+def beautify_cell(cell_data):
+    return cell_data.replace('\xa0', '').lstrip().rstrip()
+
+
 def mapping_df(mapping_file, columns_string):
     if len(columns_string.split(',')) == 4:
         df_mapping = pd.read_excel(mapping_file,
@@ -28,14 +32,22 @@ def mapping_df(mapping_file, columns_string):
                                           'mapping_column_type',
                                           'mapping_column_length'],
                                    converters={'mapping_column_length': str})\
-            .fillna('')
+            .fillna('').applymap(beautify_cell)
     else:
         df_mapping = pd.read_excel(mapping_file,
                                    sheet_name=4,
                                    header=1,
                                    usecols=columns_string,
-                                   names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])
+                                   names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])\
+                        .applymap(beautify_cell)
     return df_mapping
+
+
+def add_payload_link(source_attribute):
+    if source_attribute:
+        return 'payload.'+source_attribute
+    else:
+        return source_attribute
 
 
 def get_ddl_data(file_name):
@@ -104,3 +116,20 @@ def highlight(s):
         return ['background-color: yellow'] * len(s)
     else:
         return ['background-color: white'] * len(s)
+
+
+def prepare_parsed_column(table_df):
+    parsed_columns = '{'
+    for row in table_df.itertuples():
+        if row[3].lower() in ['changeid', 'changetype', 'changetimestamp']:
+            string = '{"name": "' + row[3] + '", "colType": "' + row[4] + '"},'
+            parsed_columns += string
+        elif row[3].lower() in ['hdp_processed_dttm', 'dte']:
+            pass
+        else:
+            string = '{"name": "' + add_payload_link(row[1]) + '", "colType": "' + row[4] + '", "alias": "' + row[
+                3] + '"},'
+            parsed_columns += string
+
+    parsed_columns = parsed_columns[:-1] + '}'
+    return parsed_columns

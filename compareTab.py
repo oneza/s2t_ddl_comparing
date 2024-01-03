@@ -116,6 +116,7 @@ class Comparator(QWidget):
     def run_button_dialog(self):
         dlg = QMessageBox(self)
         dlg.setText("All done!")
+        dlg.setWindowTitle("")
         button = dlg.exec()
 
         if button == QMessageBox.StandardButton.Ok:

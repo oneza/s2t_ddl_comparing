@@ -15,4 +15,7 @@ class UI(QMainWindow):
         tab_widget.addTab(Comparator(), "Tab 1")
         tab_widget.addTab(Generator(), "Tab 2")
 
+        self.setFixedWidth(640)
+        # self.setFixedHeight(700)
+        self.setWindowTitle("Some useful app")
         self.setCentralWidget(tab_widget)
