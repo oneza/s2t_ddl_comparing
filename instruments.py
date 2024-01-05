@@ -140,14 +140,18 @@ def split_df(df):
 def prepare_parsed_column(table_df):
     parsed_columns = '{'
     for row in table_df.itertuples():
-        if row[3].lower() in ['changeid', 'changetype', 'changetimestamp']:
-            string = '{"name": "' + row[3] + '", "colType": "' + row[4] + '"},'
+        if row[2].lower() in ['changeid', 'changetype', 'changetimestamp']:
+            string = '{"name": "' + row[2] + '", "colType": "' + row[3] + '"},'
             parsed_columns += string
-        elif row[3].lower() in ['hdp_processed_dttm', 'dte']:
+        elif row[2].lower() in ['hdp_processed_dttm', 'dte']:
             pass
         else:
-            string = '{"name": "' + add_payload_link(row[1]) + '", "colType": "' + row[4] + '", "alias": "' + row[
-                3] + '"},'
+            if row[3] == 'decimal':
+                string = ('{"name": "' + row[1] + '", "colType": "' + row[3] + '", "alias": "' +
+                          row[2] + beautify_decimals(row[4]) + '"},')
+            else:
+                string = ('{"name": "' + row[1] + '", "colType": "' + row[3] + '", "alias": "' +
+                          row[2] + '"},')
             parsed_columns += string
 
     parsed_columns = parsed_columns[:-1] + '}'
