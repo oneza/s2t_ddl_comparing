@@ -32,15 +32,26 @@ def mapping_df(mapping_file, columns_string):
                                           'mapping_column_type',
                                           'mapping_column_length'],
                                    converters={'mapping_column_length': str})\
-            .fillna('').applymap(beautify_cell)
+            .fillna('')
+    elif len(columns_string.split(',')) == 5:
+        df_mapping = pd.read_excel(mapping_file,
+                                   sheet_name=4,
+                                   header=1,
+                                   usecols=columns_string,
+                                   names=['source_column_name',
+                                          'mapping_tbl_name',
+                                          'mapping_column_name',
+                                          'mapping_column_type',
+                                          'mapping_column_length'],
+                                   converters={'mapping_column_length': str}) \
+            .fillna('')
     else:
         df_mapping = pd.read_excel(mapping_file,
                                    sheet_name=4,
                                    header=1,
                                    usecols=columns_string,
-                                   names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])\
-                        .applymap(beautify_cell)
-    return df_mapping
+                                   names=['mapping_tbl_name', 'mapping_column_name', 'mapping_column_type'])
+    return df_mapping.applymap(beautify_cell)
 
 
 def add_payload_link(source_attribute):
@@ -116,6 +127,14 @@ def highlight(s):
         return ['background-color: yellow'] * len(s)
     else:
         return ['background-color: white'] * len(s)
+
+
+def split_df(df):
+    tables = {}
+    table_names = set(df['mapping_tbl_name'].values)
+    for table_name in table_names:
+        tables[table_name] = df[df['mapping_tbl_name'] == table_name]
+    return tables
 
 
 def prepare_parsed_column(table_df):

@@ -1,99 +1,91 @@
-from PyQt6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QStackedWidget, QPushButton, QLineEdit
+from PyQt6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QStackedWidget, QPushButton, QScrollArea, \
+    QLineEdit
 from instruments import *
 
 
 class Generator(QWidget):
-    table_column_name = ''
-    names_column_name = ''
-    type_column_name = ''
-    decimal_column_name = ''
-    source_column_name = ''
 
-    def __init__(self):
+    def __init__(self, excel_file):
         super().__init__()
 
-        layout = QGridLayout()
+        self.excel_df = self.mapping_df(excel_file, 'U,V,Z,AA') # Replace with actual user input
+        layout = QVBoxLayout()
         self.setLayout(layout)
-
-        mapping_selection_text = QLabel(self)
-        mapping_selection_text.setText("Select mapping files: ")
-        mapping_selection_value_text = QLabel(self)
-        mapping_selection_value_text.setText('')
-        mapping_selection = QPushButton(self)
-        mapping_selection.setText("...")
-        mapping_selection.clicked.connect(lambda: self.open_mapping_dialog())
-        mapping_selection.clicked.connect(
-            lambda: self.update_text(mapping_selection_value_text, f'{self.mapping_addresses}'))
-
-        source_name_text = QLabel(self)
-        source_name_text.setText("Fill in letters of source attributes column: ")
-        source_name_value_text = QLineEdit(self)
-        source_name_value_text.setText('')
-        source_name_value_text.textChanged.connect(lambda: self.change_text(source_name_value_text.text(), 'source'))
-
-        table_name_text = QLabel(self)
-        table_name_text.setText("Fill in letters of table name column: ")
-        table_name_value_text = QLineEdit(self)
-        table_name_value_text.setText('')
-        table_name_value_text.textChanged.connect(lambda: self.change_text(table_name_value_text.text(), 'table'))
-
-        column_name_text = QLabel(self)
-        column_name_text.setText("Fill in letters of column name column: ")
-        column_name_value_text = QLineEdit(self)
-        column_name_value_text.setText('')
-        column_name_value_text.textChanged.connect(lambda: self.change_text(column_name_value_text.text(), 'name'))
-
-        dtype_name_text = QLabel(self)
-        dtype_name_text.setText("Fill in letters of data type name column: ")
-        dtype_name_value_text = QLineEdit(self)
-        dtype_name_value_text.setText('')
-        dtype_name_value_text.textChanged.connect(lambda: self.change_text(dtype_name_value_text.text(), 'dtype'))
-
-        layout.addWidget(source_name_text, 0, 0)
-        layout.addWidget(source_name_value_text, 0, 1)
-        layout.addWidget(table_name_text, 1, 0)
-        layout.addWidget(table_name_value_text, 1, 1)
-        layout.addWidget(column_name_text, 2, 0)
-        layout.addWidget(column_name_value_text, 2, 1)
-        layout.addWidget(dtype_name_text, 3, 0)
-        layout.addWidget(dtype_name_value_text, 3, 1)
 
         self.stacked_widget = QStackedWidget()
         layout.addWidget(self.stacked_widget)
-
         self.switch_screen_btn = QPushButton("Switch Screen")
-        layout.addWidget(self.switch_screen_btn)
+        self.current_screen_index = 0
+
+        self.init_screen(excel_file)
+
+    def init_screen(self, excel_file):
+        first_screen = QScrollArea()  # Create a scroll area for the first screen
+
+        self.stacked_widget.addWidget(first_screen)
+
+        inner_widget = QWidget()  # Create an inner widget for the scroll area
+        layout = QVBoxLayout()
+        inner_widget.setLayout(layout)
+
+        first_screen.setWidgetResizable(True)
+        first_screen.setWidget(inner_widget)
+
+        # Create fields for user to fill information
+        for i in range(5):
+            label = QLabel(f"Field {i + 1}: ")
+            line_edit = QLineEdit()
+            layout.addWidget(label)
+            layout.addWidget(line_edit)
+
+        self.switch_screen_btn.clicked.connect(self.add_screens)
         self.switch_screen_btn.clicked.connect(self.switch_screen)
-
-    def switch_screen(self, num_of_mappings):
-        num_screens = num_of_mappings + 1  # Replace with actual user input
-
         current_screen_count = self.stacked_widget.count()
 
-        if num_screens > current_screen_count:
-            for i in range(num_screens - current_screen_count):
-                self.stacked_widget.addWidget(ScreenWidget())
-        elif num_screens < current_screen_count:
-            for i in range(current_screen_count - num_screens):
-                self.stacked_widget.removeWidget(self.stacked_widget.widget(0))
-        # Change the current screen as needed, for example: self.stacked_widget.setCurrentIndex(0)
+        layout.addWidget(self.switch_screen_btn)
 
-    @classmethod
-    def change_text(cls, text, column_name):
-        if column_name == 'table':
-            cls.table_column_name = text
-        elif column_name == 'name':
-            cls.names_column_name = text
-        elif column_name == 'dtype':
-            cls.type_column_name = text
-        elif column_name == 'decimal':
-            cls.decimal_column_name = text
-        elif column_name == 'source':
-            cls.source_column_name = text
+    def add_screens(self):
+        # current_screen_count = self.stacked_widget.count()
+        for index, dataframe in enumerate(split_df(self.excel_df).values(), start=1):
+            screen_widget = QScrollArea()  # Create a scroll area for each screen
+            self.stacked_widget.addWidget(screen_widget)
+
+            inner_widget = QWidget()  # Add an inner widget to each scroll area
+            # layout = QVBoxLayout()
+            layout = QGridLayout()
+            inner_widget.setLayout(layout)
+
+            screen_widget.setWidgetResizable(True)
+            screen_widget.setWidget(inner_widget)
+
+            for j, row in enumerate(dataframe.itertuples()):
+                # for value in row:
+                source_label = QLabel(f"Source name: ")
+                source_line_edit = QLineEdit(str(row[1]), parent=screen_widget)
+                target_label = QLabel(f"Source name: ")
+                target_line_edit = QLineEdit(str(row[1]), parent=screen_widget)
+                dtype_label = QLabel(f"Source name: ")
+                dtype_line_edit = QLineEdit(str(row[1]), parent=screen_widget)
+                length_label = QLabel(f"Source name: ")
+                length_line_edit = QLineEdit(str(row[1]), parent=screen_widget)
+                layout.addWidget(source_label, j, 0)
+                layout.addWidget(source_line_edit, j, 1)
+                layout.addWidget(target_label, j, 2)
+                layout.addWidget(target_line_edit, j, 3)
+                layout.addWidget(dtype_label, j, 4)
+                layout.addWidget(dtype_line_edit, j, 5)
+                layout.addWidget(length_label, j, 6)
+                layout.addWidget(length_line_edit, j, 7)
+
+            switch_screen_btn = QPushButton("Switch Screen")
+            layout.addWidget(switch_screen_btn)
+            switch_screen_btn.clicked.connect(self.switch_screen)
+            self.stacked_widget.addWidget(screen_widget)
+
+    def switch_screen(self):
+        self.current_screen_index += 1
+
+        if self.current_screen_index < self.stacked_widget.count():
+            self.stacked_widget.setCurrentIndex(self.current_screen_index)
         else:
-            pass
-
-
-class ScreenWidget(QWidget):
-# Define the content of each screen here
-    pass
+            print("No more screens to switch to")
