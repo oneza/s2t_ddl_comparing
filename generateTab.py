@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QLabel, QGridLayout, QVBoxLayout, QStackedWidget, QPushButton, QScrollArea, \
-    QLineEdit, QFileDialog, QCheckBox
+    QLineEdit, QFileDialog, QCheckBox, QComboBox
 from instruments import *
 
 
@@ -15,15 +15,18 @@ class Generator(QWidget):
         super().__init__()
 
         self.payload = 0
-        # self.excel_df = mapping_df(excel_file, 'G,U,V,Z,AA')  # Replace with actual user input
-        self.excel_df = pd.DataFrame
+        excel_file = "C:/Users/Capit/Desktop/test_mapping.xlsx"
+        self.excel_df = mapping_df(excel_file, 'G,U,V,Z,AA')  # Replace with actual user input
+        # self.excel_df = pd.DataFrame
         layout = QVBoxLayout()
         self.setLayout(layout)
+        self.line_edits = []
 
         self.stacked_widget = QStackedWidget()
         layout.addWidget(self.stacked_widget)
         self.switch_screen_btn = QPushButton("Switch Screen")
         self.current_screen_index = 0
+        # self.connect_line_edit_signals()
 
         self.init_screen()
 
@@ -101,7 +104,7 @@ class Generator(QWidget):
         layout.addWidget(payload_text, 6, 0)
         layout.addWidget(payload_checkbox, 6, 1)
 
-        self.switch_screen_btn.clicked.connect(self.set_excel_df)
+        # self.switch_screen_btn.clicked.connect(self.set_excel_df)
         self.switch_screen_btn.clicked.connect(self.add_screens)
         self.switch_screen_btn.clicked.connect(self.switch_screen)
 
@@ -119,7 +122,8 @@ class Generator(QWidget):
             screen_widget.setWidgetResizable(True)
             screen_widget.setWidget(inner_widget)
 
-            for j, row in enumerate(dataframe.itertuples()):
+            table_name = dataframe['mapping_tbl_name'].values[0]
+            for j, row in enumerate(dataframe.itertuples(), start=1):
                 source_label = QLabel(f"Source name: ")
                 if self.payload == 0:
                     source_line_edit = QLineEdit(str(row[1]), parent=screen_widget)
@@ -131,6 +135,14 @@ class Generator(QWidget):
                 dtype_line_edit = QLineEdit(str(row[4]), parent=screen_widget)
                 length_label = QLabel(f"Target length: ")
                 length_line_edit = QLineEdit(str(row[5]), parent=screen_widget)
+                # source_line_edit.textChanged.connect(lambda: self.update_data(source_line_edit.text()))
+                # target_line_edit.textChanged.connect(lambda: self.update_data(target_line_edit))
+                # dtype_line_edit.textChanged.connect(lambda: self.update_data(dtype_line_edit))
+                # length_line_edit.textChanged.connect(lambda: self.update_data(length_line_edit))
+                self.line_edits.append(source_line_edit)
+                self.line_edits.append(target_line_edit)
+                self.line_edits.append(dtype_line_edit)
+                self.line_edits.append(length_line_edit)
                 layout.addWidget(source_label, j, 0)
                 layout.addWidget(source_line_edit, j, 1)
                 layout.addWidget(target_label, j, 2)
@@ -140,15 +152,41 @@ class Generator(QWidget):
                 layout.addWidget(length_label, j, 6)
                 layout.addWidget(length_line_edit, j, 7)
 
+            load_type_label = QLabel(f"Target table name: ")
+            load_type_dropmenu = self.add_load_type(screen_widget)
+            pre_filter_label = QLabel(f"Prefilter condition: ")
+            pre_filter_line_edit = QLineEdit('value like \'%meta_:{_Class_:_%\'', parent=screen_widget)
+            post_filter_label = QLabel(f"Postfilter condition: ")
+            post_filter_line_edit = QLineEdit('meta.Class = \'\'', parent=screen_widget)
+            increment_value_label = QLabel(f"Increment value: ")
+            increment_value_line_edit = QLineEdit('hdp_processed_dttm', parent=screen_widget)
+            target_table_label, target_table_name = self.load_type('scd0append',
+                                                                            target_table_name=table_name,
+                                                                            screen_widget=screen_widget)
+
+            layout.addWidget(load_type_label, 0, 0)
+            layout.addWidget(load_type_dropmenu, 0, 1)
+            layout.addWidget(pre_filter_label, j + 1, 0)
+            layout.addWidget(pre_filter_line_edit, j + 1, 1)
+            layout.addWidget(post_filter_label, j + 2, 0)
+            layout.addWidget(post_filter_line_edit, j + 2, 1)
+            layout.addWidget(increment_value_label, j + 3, 0)
+            layout.addWidget(increment_value_line_edit, j + 3, 1)
+            layout.addWidget(target_table_label, j + 4, 0)
+            layout.addWidget(target_table_name, j + 4, 1)
+
+
             switch_screen_btn = QPushButton("Switch Screen")
             layout.addWidget(switch_screen_btn)
             switch_screen_btn.clicked.connect(self.switch_screen)
+            switch_screen_btn.clicked.connect(self.update_data)
+            # for line_edit in self.line_edits:
+            #     line_edit.textChanged.connect(lambda text, line_edit=line_edit: self.update_data(text, line_edit))
             switch_screen_btn.clicked.connect(self.collect_data)
             self.stacked_widget.addWidget(screen_widget)
 
     def switch_screen(self):
         self.current_screen_index += 1
-
         if self.current_screen_index < self.stacked_widget.count():
             self.stacked_widget.setCurrentIndex(self.current_screen_index)
         else:
@@ -177,23 +215,23 @@ class Generator(QWidget):
         current_screen = self.stacked_widget.currentWidget()  # Get the current scroll area
 
         inner_widget = current_screen.widget()  # Get the inner widget of the scroll area
-        line_edits = inner_widget.findChildren(QLineEdit)  # Find all QLineEdit widgets in the inner widget
+        line_edits = inner_widget.findChildren(QLineEdit)
+        # current_line_edits = [line_edit for line_edit in self.line_edits if line_edit in line_edits]
 
         data = {}
         for line_edit in line_edits:
             field_name = line_edit.parent().layout().itemAt(
                 line_edit.parent().layout().indexOf(line_edit) - 1).widget().text()
-            # data += line_edit.text()  # Collect the text from each QLineEdit
             text = line_edit.text()
-            if field_name in data:
-                data[field_name].append(text)
-            else:
-                data[field_name] = [text]
-            # data.append((field_name, line_edit.text()))
+            if field_name in ['Source name: ', 'Target name: ', 'Target dtype: ', 'Target length: ']:
+                if field_name in data:
+                    data[field_name].append(text)
+                else:
+                    data[field_name] = [text]
         data_df = pd.DataFrame.from_dict(data)
         resulting_string = prepare_parsed_column(data_df)
+        print(resulting_string)
         return resulting_string
-        # print(resulting_string)  # Print collected data for demonstration purposes
 
     @classmethod
     def prepare_excel(cls):
@@ -242,3 +280,22 @@ class Generator(QWidget):
             cls.source_column_name = text
         else:
             pass
+
+    def update_data(self):
+        for line_edit in self.line_edits:
+            line_edit.setText(line_edit.text())
+
+    def load_type(self, load_type, **kwargs):
+        match load_type.lower():
+            case 'scd0append':
+                target_table_label = QLabel(f"Target table name: ")
+                target_table_line_edit = QLineEdit(str(kwargs['target_table_name']), parent=kwargs['screen_widget'])
+                return target_table_label, target_table_line_edit
+            case 'scd1distinct':
+                pass
+            case 'scd2migration':
+                pass
+    def add_load_type(self, parent):
+        load_type_dropmenu = QComboBox(parent=parent)
+        load_type_dropmenu.addItems(['Scd0Append', 'Scd1Distinct', 'Scd2Migration'])
+        return load_type_dropmenu
